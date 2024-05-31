@@ -1,0 +1,56 @@
+Equações possiveis para o software de aero:
+pressâo = p
+densidade = rho
+velocidade = v
+Vazão = q
+Área = a
+Viscosidade Cinematica ni= mi/rho
+Lift = l
+Largura = largura
+Arrasto(Drag) = d
+Calor especifico= c
+massa=m
+temperatura onde ocorre a troca = temp_s 
+temperatura do fluido = temp_s
+gradiente de temperatura = grad_temp
+condutividade termica do material = k
+denominador= (1/2 * rho*a*(v**2)) 
+
+EQUAÇÕES PARA FORÇAS AERODINAMICAS:
+
+1. Equação de Bernoulli:
+    bernoulli= ((p/rho)+(v**2)/2)
+
+2. Coeficiente de Arrasto:
+    denominador= (1/2 * rho*a*(v**2)) 
+    constant_Drag= (d/denominador)
+    constant_Drag= 1.328/num_Rey**0.5  -- pag 445 do white, equação 7.27 - fluxo laminar
+    constant_Drag= 0.031/num_Rey**(1/7)  -- pag 449 do white, equação 7.45 - fluxo turbulento
+
+3. Coeficiente de Lift:
+    constant_Lift= (l/denominador) pag 475 do white, equação 7.66
+
+4. Número de Reynolds:
+    num_Rey = v*length/viscosity_ni -- pag 460 do white, equação 7.61
+
+4. Arrasto:
+    d = constant_Drag * denominador
+
+5. Lift:
+    l = constant_Lift * denominador
+
+6. Equação de Continuidade:
+    vazao1=vazao2
+    area1*velocidad1=area2*velocidade2
+    rho*area1*velocidade1=rho*area2*velocidade2
+
+EQUAÇÕES PARA ARREFECIMENTO:
+
+1. Lei de Fourier:
+    qcond= -k*area_superficie*grad_temp
+
+2. Resfriamento por convecção:
+    qconv = h*area_superficie(temp_superficie - temp_fluido)
+
+3. Calor:
+    calor=c*m*(temp_final-temp_inicial)
