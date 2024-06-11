@@ -34,7 +34,6 @@ a_sup= 2                         #Área de Superfície do carro (m^2)
 cd = 0.75                        #Coeficiente de arrasto por pressão do carro
 cl= -0.3                         #Coeficiente de lift do carro
 
-
 carro=forcas_aerodinamicas(af,a_sup,rho,cd,cl,length,ni) 
 
 # Velocidades de 0 a 60 m/s
