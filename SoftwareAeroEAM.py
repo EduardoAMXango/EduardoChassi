@@ -13,7 +13,7 @@ length= 2                           #Comprimento do carro (m^2)
 af= 1.5                             #Área Frontal do carro (m^2)
 a_sup= 2                            #Área de Superfície do carro (m^2)
 cd_f = 0.05                         #Coeficiente de arrasto por atrito do carro
-cd_p = 0.75                         #Coeficiente de arrasto por pressão do carro
+cd_p = 0.35                         #Coeficiente de arrasto por pressão do carro
 ld= -0.3                            #Coeficiente de lift do carro
 a1= 0.25                            #Área de entrada do ar embaixo do carro (m^2)
 a2= 0.20                            #Área embaixo do carro (m^2)
@@ -46,7 +46,6 @@ def bernoulli(v1,p1,a1,a2,rho):
 def lift_wing(alpha,aspect_ratio):
     cl_alpha=(2*math.pi)/(1+(2/aspect_ratio))
     cl_wing=cl_alpha*alpha
-    #cd_induced=(1/math.pi*aspect_ratio)*cl_wing**2
     return cl_wing
 
 #Soma dos coeficientes de arrasto
@@ -57,24 +56,25 @@ velocidades = np.linspace(0.1,60,50)
 # Cálculo dos coeficientes das asas
 cl_w=lift_wing(alpha,aspect_ratio)                  #Coeficiente de lift da asa
 cd_induced=(1/(math.pi*aspect_ratio))*cl_w**2       #Coeficiente de arrasto induzido da asa
+cd_w=cd_induced+0.05
 print(f"coeficiente de lift da asa: {cl_w:0.2f} , coeficiente de arrasto induzido: {cd_induced:0.2f}")
 for v in velocidades:
     # Cálculo da pressão dinâmica para cada velocidade
     pdinamica = 0.5 * rho  * (velocidades ** 2)
 
     # Cálculo do drag e lift para cada velocidade
-    drags = aerodynamic_forces(cd, pdinamica, af)                                   #Arrasto 
+    drags = aerodynamic_forces(cd_p, pdinamica, af) + aerodynamic_forces(cd_f, pdinamica, a_sup)                                    #Arrasto 
     downforces = aerodynamic_forces(ld, pdinamica,a_sup)                            #Downforce 
 
     lifts_wing = aerodynamic_forces(cl_w, pdinamica, a_wing)                        #Lift da asa
-    drags_wing = aerodynamic_forces(cd_induced, pdinamica, a_wing)                  #Arrasto induzido pela asa
+    drags_wing = aerodynamic_forces(cd_w, pdinamica, a_wing)                  #Arrasto induzido pela asa
 
     #Calculo de Downforce por bernoulli
     downforce_bernoulli= (-1)*bernoulli(velocidades,p_atm,a1,a2,rho)*a_sup    #Conversão da pressão para força por meio da relação pressão=força/área --- força=pressão*área
 
 # Plotagem do gráfico 1
 plt.figure(figsize=(10, 6))
-plt.subplot(1,2,1)
+plt.subplot(2,3,1)
 plt.plot(velocidades, drags, label='Drag')
 # Configurações do gráfico
 plt.title('Gráfico de Arrasto em função da Velocidade')
@@ -84,7 +84,7 @@ plt.legend()
 plt.grid(True)
 
 # Plotagem do gráfico 2
-plt.subplot(1,2,2)
+plt.subplot(2,3,2)
 plt.plot(velocidades, downforces, label='Downforce', linestyle='--')
 plt.plot(velocidades, downforce_bernoulli, label='Downforce por bernoulli', linestyle='-.')
 # Configurações do gráfico2
@@ -95,6 +95,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 # Plotagem do gráfico 3
+plt.subplot(2,3,3)
 plt.plot(velocidades, lifts_wing, label='Lift', linestyle='--')
 plt.plot(velocidades, drags_wing, label='Arrasto', linestyle='-.')
 # Configurações do gráfico 3
@@ -105,12 +106,3 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-#Arrefecimento
-vel_ar=10
-#Equações
-vazao_ar = rho*vel_ar*a_ent          #Calculo da vazão mássica de ar 
-calor= c_ar*deltaT*vazao_ar          #Cálculo do fluxo de calor do ar (W)
-Qconvecção= h*a_res*deltaT           #Cálculo da quantidade de calor dissipada
-
-print(f"{Qconvecção:0.1f} J/s")
-print(f"{calor:0.1f} W")
