@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>Pista De piracicaba</name>
+	<Style id="icon-1899-DB4436-nodesc-highlight">
+		<IconStyle>
+			<color>ff3644db</color>
+			<Icon>
+				<href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+			</Icon>
+			<hotSpot x="32" y="64" xunits="pixels" yunits="insetPixels"/>
+		</IconStyle>
+		<BalloonStyle>
+			<text><![CDATA[<h3>$[name]</h3>]]></text>
+		</BalloonStyle>
+	</Style>
+	<Style id="icon-1899-DB4436-nodesc-normal">
+		<IconStyle>
+			<color>ff3644db</color>
+			<Icon>
+				<href>https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png</href>
+			</Icon>
+			<hotSpot x="32" y="64" xunits="pixels" yunits="insetPixels"/>
+		</IconStyle>
+		<LabelStyle>
+			<scale>0</scale>
+		</LabelStyle>
+		<BalloonStyle>
+			<text><![CDATA[<h3>$[name]</h3>]]></text>
+		</BalloonStyle>
+	</Style>
+	<StyleMap id="icon-1899-DB4436-nodesc">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#icon-1899-DB4436-nodesc-normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#icon-1899-DB4436-nodesc-highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="line-1267FF-5000-nodesc-highlight">
+		<LineStyle>
+			<color>ffff6712</color>
+			<width>7.5</width>
+		</LineStyle>
+		<BalloonStyle>
+			<text><![CDATA[<h3>$[name]</h3>]]></text>
+		</BalloonStyle>
+	</Style>
+	<Style id="line-1267FF-5000-nodesc-normal">
+		<LineStyle>
+			<color>ffff6712</color>
+			<width>5</width>
+		</LineStyle>
+		<BalloonStyle>
+			<text><![CDATA[<h3>$[name]</h3>]]></text>
+		</BalloonStyle>
+	</Style>
+	<StyleMap id="line-1267FF-5000-nodesc">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#line-1267FF-5000-nodesc-normal</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#line-1267FF-5000-nodesc-highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="0CFC3DB64132D56B7FCD">
+		<name>Pista De piracicaba</name>
+		<styleUrl>#line-1267FF-5000-nodesc</styleUrl>
+		<LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+				-47.53325,-22.73895,0 -47.5336,-22.73969,0 -47.53391,-22.7403,0 -47.53393,-22.74034,0 -47.53394999999999,-22.74043,0 -47.53394999999999,-22.7405,0 -47.53394000000001,-22.74057,0 -47.53393,-22.74061,0 -47.53388000000001,-22.74065999999999,0 -47.53382999999999,-22.7407,0 -47.53376,-22.74074,0 -47.53374,-22.74075,0 -47.53372,-22.74076,0 -47.53362,-22.74076,0 -47.53354,-22.74075,0 -47.53344,-22.74073,0 -47.5334,-22.7407,0 -47.53339,-22.74068,0 -47.53299,-22.74006,0 -47.53296,-22.74001,0 -47.53259,-22.73944,0 -47.53247,-22.73945,0 -47.53221,-22.73942,0 -47.53195,-22.7394,0 -47.53139,-22.73935,0 -47.53122,-22.73927,0 -47.53113,-22.7392,0 -47.53105999999999,-22.73914,0 -47.53104,-22.73912,0 -47.53097,-22.73902,0 -47.53093,-22.73887,0 -47.5309,-22.73875,0 -47.5309,-22.73865,0 -47.53091,-22.73863,0 -47.53093,-22.73855,0 -47.53098,-22.73842,0 -47.53105999999999,-22.73829,0 -47.53118,-22.73816,0 -47.53131,-22.73803,0 -47.53157,-22.73776,0 -47.5317,-22.73762,0 -47.53171,-22.73762,0 -47.53192,-22.73746,0 -47.53202000000001,-22.73742,0 -47.53213000000001,-22.73739,0 -47.53226,-22.73739,0 -47.53236,-22.73741,0 -47.53245,-22.73746,0 -47.53251,-22.73752,0 -47.53259,-22.7376,0 -47.53264,-22.7377,0 -47.53312,-22.7387,0 -47.53324780077993,-22.73894644947914,0 
+			</coordinates>
+		</LineString>
+	</Placemark>
+	<Placemark id="0BF4A4DE0132D56B733B">
+		<name>Autódromo ecpa - Tupi, Piracicaba - SP, Brasil</name>
+		<styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+		<Point>
+			<coordinates>-47.53324921437961,-22.73894540328081,0</coordinates>
+		</Point>
+	</Placemark>
+	<Placemark id="087EAE529132D56B69A9">
+		<name>Autódromo ecpa - Tupi, Piracicaba - SP, Brasil</name>
+		<styleUrl>#icon-1899-DB4436-nodesc</styleUrl>
+		<Point>
+			<coordinates>-47.53325288716506,-22.73895198878848,0</coordinates>
+		</Point>
+	</Placemark>
+</Document>
+</kml>

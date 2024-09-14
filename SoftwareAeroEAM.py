@@ -13,7 +13,7 @@ length= 2                           #Comprimento do carro (m^2)
 af= 1.5                             #Área Frontal do carro (m^2)
 a_sup= 2                            #Área de Superfície do carro (m^2)
 cd_f = 0.05                         #Coeficiente de arrasto por atrito do carro
-cd_p = 0.35                         #Coeficiente de arrasto por pressão do carro
+cd_p = 0.45                         #Coeficiente de arrasto por pressão do carro
 ld= -0.3                            #Coeficiente de lift do carro
 a1= 0.25                            #Área de entrada do ar embaixo do carro (m^2)
 a2= 0.20                            #Área embaixo do carro (m^2)
@@ -21,7 +21,7 @@ a2= 0.20                            #Área embaixo do carro (m^2)
 chord=0.25                          #Comprimento da asa (m)
 span=1                              #Largura da asa (m)
 thickness=0.05                      #Expessura máxima da asa (m)
-alpha=math.radians(8)               #Ângulo de incidencia do vento com a asa (radianos)
+alpha=math.radians(-3.75)               #Ângulo de incidencia do vento com a asa (radianos)
 a_wing=span*chord                   #Área superior da asa (m^2)
 aspect_ratio=(span**2)/a_wing       #Comparação entre a largura e o comprimento da asa
 #parâmetros para a troca termica
@@ -74,7 +74,7 @@ for v in velocidades:
 
 # Plotagem do gráfico 1
 plt.figure(figsize=(10, 6))
-plt.subplot(2,3,1)
+plt.subplot(1,3,1)
 plt.plot(velocidades, drags, label='Drag')
 # Configurações do gráfico
 plt.title('Gráfico de Arrasto em função da Velocidade')
@@ -84,7 +84,7 @@ plt.legend()
 plt.grid(True)
 
 # Plotagem do gráfico 2
-plt.subplot(2,3,2)
+plt.subplot(1,3,2)
 plt.plot(velocidades, downforces, label='Downforce', linestyle='--')
 plt.plot(velocidades, downforce_bernoulli, label='Downforce por bernoulli', linestyle='-.')
 # Configurações do gráfico2
@@ -93,9 +93,8 @@ plt.xlabel('Velocidade (m/s)')
 plt.ylabel('Força (N)')
 plt.legend()
 plt.grid(True)
-plt.show()
 # Plotagem do gráfico 3
-plt.subplot(2,3,3)
+plt.subplot(1,3,3)
 plt.plot(velocidades, lifts_wing, label='Lift', linestyle='--')
 plt.plot(velocidades, drags_wing, label='Arrasto', linestyle='-.')
 # Configurações do gráfico 3

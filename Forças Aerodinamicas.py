@@ -26,15 +26,6 @@ class forcas_aerodinamicas():
         lift=self.cl * pressao_dinamica * self.asup
         return drag,lift
     
-#    def numero_Reynolds(self,velocidade):         # Função para encontrar o numero de reynolds
-        return (self.x*velocidade)/self.ni
-    
-#    def bernoulli(self,velocidade):
-        v2=velocidade*self.a1/self.a2                                   # Equação de conservação para encontrar a velocidade embaixo do carro
-        p2=self.p_atm +0.5*rho*velocidade**2 - 0.5*v2**2                # Equação de bernoulli para encontrar a pressão embaixo do carro
-        deltap=self.p_atm-p2                                            # Diferença de pressão entre a parte de baixo e a parte de cima do carro
-        return deltap
-    
     def aerodynamics_forces_wing(self,velocidade):                         #Função para calcular as forças aerodinamicas geradas pela asa
         pressao_dinamica=0.5*self.rho*(velocidade**2)
         cl_alpha=(2*math.pi)/(1+(2/self.AR))
@@ -57,8 +48,6 @@ a_sup= 2                         #Área de Superfície do carro (m^2)
 cd_p = 0.45                      #Coeficiente de arrasto por pressão do carro
 cd_f = 0.05                      #Coeficiente de arrasto por atrito do carro
 cl= -0.3                         #Coeficiente de lift do carro
-a1= 0.25                         #Área de entrada do ar embaixo do carro (m^2)
-a2= 0.20                         #Área embaixo do carro (m^2)
 #parâmetros da asa
 chord=0.25                          #Comprimento da asa (m)
 span=1                              #Largura da asa (m)
