@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+class Arrefecimento():
+    def __init__(self,area_resfriamento,densidade_ar,calor_especifico_ar,temp_ar,temp_objeto,velocidade,viscosidade_cinematica_ar,condutividade_ar,viscosidade_dinamica_ar,massa,temp_desejada,calor_especifico_objeto):
+        self.a_res= area_resfriamento
+        self.rho= densidade_ar
+        self.c= calor_especifico_ar
+        self.v=velocidade
+        self.tf=temp_ar
+        self.to=temp_objeto
+        self.mi=viscosidade_dinamica_ar
+        self.ni=viscosidade_cinematica_ar
+        self.k_ar=condutividade_ar
+        self.m=massa
+        self.temp_desejada= temp_desejada
+        self.c_objeto=calor_especifico_objeto
+    def arrefecimento_pwt(self,comprimento):
+        Pr=(self.mi*self.c)/self.k_ar                                               # Cálculo do número de Prandlt
+        Rey=comprimento*self.v/self.ni                                              # Cálculo do número de Reynolds
+    
+        if Rey < 200000:                                                            #Fluxo laminar
+            Nul= (0.664 * (Rey**0.5) * (Pr**(1/3)))
+        else:                                                                       #Fluxo Turbulento
+            X=200000*self.ni/self.v                                                 # Comprimento da placa onde o fluxo transiciona para turbulento
+            Rey_X= X*self.v/self.ni                                                 # Cálculo do número de Reynolds para a distância X
+            A= 0.037*(Rey_X**0.8) - 0.664*(Rey_X**0.5)
+            Nul= (0.037 * ((Rey**0.8) - A) * (Pr**(1/3)))                           # Cálculo do número de Nusselt
+        h_pwt= Nul * self.k_ar/comprimento                                          # Cálculo do coeficiente de convecção
+        flag = 0
+        flag_tempo = 0
+        temp_atual = self.to
+        quantidade_de_calor = self.m * self.c_objeto * (self.temp_desejada - temp_atual)  # Cálculo da quantidade de calor que o objeto precisa perder para alcançar a temperatura ideal
+        temp_grafico = []
+        tempo_grafico = []
+        while flag == 0:
+            qconv = h_pwt * self.a_res * (temp_atual - self.tf)  # Calor absorvido por convecção
+            temp_final = (-qconv / (self.m * self.c_objeto)) + temp_atual
+            temp_atual = temp_final
+            temp_grafico.append(temp_atual)
+            tempo_grafico.append(flag_tempo)
+            flag_tempo += 1
+            if temp_final <= self.temp_desejada:
+                flag = 1
+        return h_pwt,qconv, quantidade_de_calor, flag_tempo, temp_grafico, tempo_grafico
+
+# Parâmetros físicos do ar:
+rho = 1.184                        # Densidade(kg/m^3)
+c_ar = 1007                        # Calor especifico (J/(kg*K))
+mi = 1.849*10**-5                  # Viscosidade dinâmica (kg/m*s)
+k_ar = 0.02551                     # Condutividade termica do ar (W/m*K)
+ni = (mi/rho)                      # Viscosidade Cinematica (m²/s)
+temp_ar = 25                       # Temperatura do ar (°C)
+
+# Parametros do carro
+v = 10                             # Velocidade do carro (m/s)
+
+# Parametros de PWT
+    # Motor
+massa_motor = 50                                      # Massa do motor (kg)
+temp_motor = 100                                      # Temperatura do motor (°C) 
+comprimento_motor = 0.6                               # Comprimento do motor (m)
+largura_motor = 0.3                                   # Largura do motor (m)
+a_res_motor = largura_motor*comprimento_motor         # Área de resfriamento do motor (m^2)
+v_motor = a_res_motor*0.5                             # Área de resfriamento do motor (m^2)
+c_motor = 420                                         # Calor especifico (J/(kg*K))
+temp_ideal=30
+motor  = Arrefecimento(a_res_motor,rho,c_ar,temp_ar,temp_motor,v,ni,k_ar,mi,massa_motor,temp_ideal,c_motor)               # Definição do objeto para motor
+
+# Arrefecimento para PWT
+h_pwt,calor_abs_motor, calor_necessario_motor, tempo_resfriamento, temperatura, tempo = motor.arrefecimento_pwt(comprimento_motor)
+
+print(f"O arrefecimento do motor absorbe {calor_abs_motor:0.2f} J/s")
+print(f"O motor precisa perder {calor_necessario_motor:0.2f} J para esfriar até a temperatura ideal")
+print(f"O motor leva {(tempo_resfriamento)/60:0.2f} minutos esfriar até a temperatura ideal\n")
+
+# Plotar o gráfico
+plt.plot(tempo, temperatura)
+plt.xlabel('Tempo(s)')
+plt.ylabel('Temperatura (°C)')
+plt.title('Temperatura em função do Tempo')
+plt.grid(True)
+plt.show()
