@@ -1,152 +1,167 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pyproj import Transformer
-import numpy as np
+from scipy.interpolate import CubicSpline
 from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.animation as animation
-from scipy.interpolate import griddata
 
-class CoordenadasUTM:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.df = None
-        self.utm_coordinates = None
-        self.utm_x = None
-        self.utm_y = None
-        self.utm_z = None
-        self.utm_x_left = None
-        self.utm_y_left = None
-        self.utm_x_right = None
-        self.utm_y_right = None
-        self.transformer = self._get_transformer()
-        self.num_voltas = 1  # Número de voltas
-        self.margem_malha = 10  # Margem para estender a malha além da pista (em metros)
+class Pista:
+    def __init__(self, coordenadas, elevacao, atrito, largura_pista):
+        self.gps_coords = coordenadas
+        self.elevacao = elevacao
+        self.atrito = atrito
+        self.largura = largura_pista
 
-    # Método para carregar e processar os dados do Excel
-    def load_and_process_data(self):
-        self.df = pd.read_excel(self.file_path, header=None, names=['Latitude', 'Longitude', 'Elevação'])
+    # Função para normalizar um vetor
+    def normalize(self, v):
+        norm = np.linalg.norm(v)
+        if norm == 0: 
+            return v
+        return v / norm
 
-    # Método privado para definir o transformador UTM
-    def _get_transformer(self):
-        return Transformer.from_crs("EPSG:4326", "EPSG:32723", always_xy=True)  # UTM Zona 23S (EPSG:32723)
+    # Função para converter latitude/longitude para coordenadas planas X, Y
+    def latlon_to_xy(self, lat, lon, lat0, lon0):
+        R = 6371000  # Raio da Terra em metros
+        x = R * np.radians(lon - lon0) * np.cos(np.radians(lat0))
+        y = R * np.radians(lat - lat0)
+        return x, y
 
-    # Método para converter latitude, longitude e elevação para UTM
-    def convert_to_utm(self):
-        def convert_row(row):
-            x, y = self.transformer.transform(row['Longitude'], row['Latitude'])
-            return x, y, row['Elevação']
+    # Suavização da pista com interpolação cúbica
+    def suavizacao(self):    
+        lat0, lon0 = self.gps_coords[0]
+
+        # Converter as coordenadas GPS para X, Y
+        coordenadas_centro = [self.latlon_to_xy(lat, lon, lat0, lon0) + (1,) for lat, lon in self.gps_coords]
+
+        # Separar as coordenadas X, Y, Z
+        X_centro = [p[0] for p in coordenadas_centro]
+        Y_centro = [p[1] for p in coordenadas_centro]
+        Z_centro = [e/2 for e in self.elevacao]
+
+        # Interpolação cúbica
+        cs_x = CubicSpline(np.arange(len(X_centro)), X_centro, bc_type='periodic')
+        cs_y = CubicSpline(np.arange(len(Y_centro)), Y_centro, bc_type='periodic')
+        cs_z = CubicSpline(np.arange(len(Z_centro)), Z_centro, bc_type='periodic')
+
+        # Gerar mais pontos
+        t = np.linspace(0, len(X_centro)-1, 200)
+        X_suave = cs_x(t)
+        Y_suave = cs_y(t)
+        Z_suave = cs_z(t)
+        return X_suave, Y_suave, Z_suave
+
+    # Cálculo das bordas esquerda e direita da pista
+    def calcular_bordas(self, X, Y, Z):
+        esquerda = []
+        direita = []
         
-        self.utm_coordinates = self.df.apply(convert_row, axis=1)
-    
-    # Método para ajustar as coordenadas para que o menor ponto seja zero
-    def adjust_coordinates(self):
-        utm_x, utm_y, utm_z = zip(*self.utm_coordinates)
-        
-        min_x, min_y, min_z = min(utm_x), min(utm_y), min(utm_z)
-        
-        self.utm_x = [x - min_x for x in utm_x]
-        self.utm_y = [y - min_y for y in utm_y]
-        self.utm_z = [z - min_z for z in utm_z]
-
-    # Método para calcular as extremidades da pista com base no centro
-    def calculate_track_edges(self):
-        half_width = 6.5
-        utm_x_left = []
-        utm_y_left = []
-        utm_x_right = []
-        utm_y_right = []
-
-        for i in range(1, len(self.utm_x)):
-            dx = self.utm_x[i] - self.utm_x[i - 1]
-            dy = self.utm_y[i] - self.utm_y[i - 1]
-            length = np.sqrt(dx**2 + dy**2)
+        for i in range(len(X) - 1):
+            vetor_direcao = np.array([X[i+1] - X[i], Y[i+1] - Y[i]])
+            vetor_normal = np.array([-vetor_direcao[1], vetor_direcao[0]])
+            vetor_normal = self.normalize(vetor_normal)
             
-            perpendicular_x = -dy / length
-            perpendicular_y = dx / length
-
-            utm_x_left.append(self.utm_x[i - 1] + perpendicular_x * half_width)
-            utm_y_left.append(self.utm_y[i - 1] + perpendicular_y * half_width)
-            utm_x_right.append(self.utm_x[i - 1] - perpendicular_x * half_width)
-            utm_y_right.append(self.utm_y[i - 1] - perpendicular_y * half_width)
-
-        utm_x_left.append(self.utm_x[-1] + perpendicular_x * half_width)
-        utm_y_left.append(self.utm_y[-1] + perpendicular_y * half_width)
-        utm_x_right.append(self.utm_x[-1] - perpendicular_x * half_width)
-        utm_y_right.append(self.utm_y[-1] - perpendicular_x * half_width)
-
-        self.utm_x_left, self.utm_y_left = utm_x_left, utm_y_left
-        self.utm_x_right, self.utm_y_right = utm_x_right, utm_y_right
-
-    # Função de animação para mover o objeto
-    def animate_object(self, num_frames, obj):
-        def update(num):
-            pos_index = num % len(self.utm_x)  # A posição do objeto é calculada ao longo da pista
-            obj.set_data([self.utm_x[pos_index]], [self.utm_y[pos_index]])
-            obj.set_3d_properties([self.utm_z[pos_index]])
-
-        return update
-
-    # Método para gerar uma malha estendida
-    def generate_mesh(self):
-        # Adicionando margem nas coordenadas mínimas e máximas, considerando também as extremidades
-        all_x = self.utm_x + self.utm_x_left + self.utm_x_right
-        all_y = self.utm_y + self.utm_y_left + self.utm_y_right
-
-        min_x, max_x = min(all_x) - self.margem_malha, max(all_x) + self.margem_malha
-        min_y, max_y = min(all_y) - self.margem_malha, max(all_y) + self.margem_malha
-
-        # Criando uma grade regular
-        grid_x, grid_y = np.meshgrid(np.linspace(min_x, max_x, 100), 
-                                     np.linspace(min_y, max_y, 100))
-
-        # Interpolando os valores z para os pontos da grade
-        grid_z = griddata((self.utm_x, self.utm_y), self.utm_z, (grid_x, grid_y), method='cubic')
-
-        return grid_x, grid_y, grid_z
-    # Método para plotar os dados em 3D com movimento de um objeto
-    def plot_utm_coordinates_with_movement(self, num_voltas):
-        self.num_voltas = num_voltas
+            esquerda.append((X[i] + vetor_normal[0] * self.largura, Y[i] + vetor_normal[1] * self.largura, Z[i]))
+            direita.append((X[i] - vetor_normal[0] * self.largura, Y[i] - vetor_normal[1] * self.largura, Z[i]))
         
+        esquerda.append((X[-1], Y[-1], Z[-1]))
+        direita.append((X[-1], Y[-1], Z[-1]))
+        
+        return esquerda, direita
+
+    # Geração da malha entre as bordas esquerda e direita
+    def gerar_malha(self):
+        X_suave, Y_suave, Z_suave = self.suavizacao()
+        esquerda, direita = self.calcular_bordas(X_suave, Y_suave, Z_suave)
+
+        X_esq, Y_esq, Z_esq = zip(*esquerda)
+        X_dir, Y_dir, Z_dir = zip(*direita)
+
+        X_malha = np.array([X_esq, X_dir])
+        Y_malha = np.array([Y_esq, Y_dir])
+        Z_malha = np.array([Z_esq, Z_dir])
+        return X_malha, Y_malha, Z_malha, X_suave, Y_suave, Z_suave
+
+    # Função para exibir a simulação 3D da pista
+    def plotar_pista(self):
+        X_malha, Y_malha, Z_malha, X_suave, Y_suave, Z_suave = self.gerar_malha()
+
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
-        # Plotando as extremidades da pista
-        ax.plot(self.utm_x_left, self.utm_y_left, self.utm_z, label='Extremidade Esquerda', color='green')
-        ax.plot(self.utm_x_right, self.utm_y_right, self.utm_z, label='Extremidade Direita', color='red')
+        # Plotar o centro da pista
+        ax.plot(X_suave, Y_suave, Z_suave, color='blue', label="Centro da Pista")
 
-        # Adicionando nós nas extremidades (esquerda e direita)
-        ax.scatter(self.utm_x_left, self.utm_y_left, self.utm_z, color='green', marker='o', s=10, label='Nós Esquerda')
-        ax.scatter(self.utm_x_right, self.utm_y_right, self.utm_z, color='red', marker='o', s=10, label='Nós Direita')
+        # Separar as bordas
+        X_esq, Y_esq, Z_esq = X_malha[0], Y_malha[0], Z_malha[0]
+        X_dir, Y_dir, Z_dir = X_malha[1], Y_malha[1], Z_malha[1]
 
-        # Criando um ponto que será o objeto a se mover na pista
-        obj, = ax.plot([self.utm_x[0]], [self.utm_y[0]], [self.utm_z[0]], 'bo', label='Objeto')
+        # Plotar as bordas esquerda e direita
+        ax.plot(X_esq, Y_esq, Z_esq, color='green', label="Borda Esquerda")
+        ax.plot(X_dir, Y_dir, Z_dir, color='red', label="Borda Direita")
 
-        # Adicionando a malha estendida
-        grid_x, grid_y, grid_z = self.generate_mesh()
-        ax.plot_surface(grid_x, grid_y, grid_z, cmap='terrain', alpha=0.6)
+        # Conectar as bordas com linhas
+        for i in range(len(X_esq)):
+            ax.plot([X_esq[i], X_dir[i]], [Y_esq[i], Y_dir[i]], [Z_esq[i], Z_dir[i]], color='gray')
 
-        # Configurações do gráfico
-        ax.set_xlabel('X (m)')
-        ax.set_ylabel('Y (m)')
-        ax.set_zlabel('Z (m)')
-        ax.set_title('Objeto Percorrendo a Pista')
+        # Plotar a malha
+        ax.plot_surface(X_malha, Y_malha, Z_malha, color='black', alpha=0.7)
 
-        # Animação do objeto
-        num_frames = len(self.utm_x) * self.num_voltas
-        ani = animation.FuncAnimation(fig, self.animate_object(num_frames, obj), frames=num_frames, interval=100, repeat=False)
-
-        plt.legend()
+        # Configurações adicionais
+        ax.set_xlabel('X (metros)')
+        ax.set_ylabel('Y (metros)')
+        ax.set_zlabel('Z (metros)')
+        ax.set_title(f"Pista com Atrito de {self.atrito}")
+        ax.legend()
         plt.show()
 
-    # Método principal que organiza o fluxo de execução
-    def process_and_plot(self, num_voltas=1):
-        self.load_and_process_data()
-        self.convert_to_utm()
-        self.adjust_coordinates()
-        self.calculate_track_edges()  # Calcula as extremidades da pista
-        self.plot_utm_coordinates_with_movement(num_voltas)
+    # Verificar o ponto mais próximo da malha e exibir o atrito
+    def verificar_atrito(self,ponto):
+        """
+        Verifica se o atrito está corretamente indexado para um ponto dado.
+        
+        Parâmetros:
+        ponto (tuple): Um ponto (x, y, z) para verificar.
+        X_malha, Y_malha, Z_malha (numpy arrays): Malha de pontos X, Y, Z.
+        atrito (float): O valor do coeficiente de atrito aplicado.
 
-# Executando o programa
-file_path = 'C:\\Users\\dudua\\OneDrive\\Documentos\\GitHub\\EduardoChassi\\coordenadas.xlsx'
-utm_converter = CoordenadasUTM(file_path)
-utm_converter.process_and_plot(num_voltas=100)  # O objeto vai percorrer a pista 100 vezes
+        Retorna:
+        dist_min (float): A menor distância encontrada para o ponto mais próximo.
+        ponto_mais_proximo (tuple): O ponto da malha mais próximo do ponto dado.
+        """
+        x, y, z = ponto
+        X_malha,Y_malha,Z_malha,_,_,_=self.gerar_malha()
+        # Calcular a distância de cada ponto da malha até o ponto fornecido
+        distancias = np.sqrt((X_malha - x) ** 2 + (Y_malha - y) ** 2 + (Z_malha - z) ** 2)
+        
+        # Encontrar a menor distância e o índice do ponto mais próximo
+        indice_mais_proximo = np.unravel_index(np.argmin(distancias), distancias.shape)
+        dist_min = distancias[indice_mais_proximo]
+        
+        # Obter as coordenadas do ponto mais próximo na malha
+        ponto_mais_proximo = (X_malha[indice_mais_proximo], Y_malha[indice_mais_proximo], Z_malha[indice_mais_proximo])
+        
+        print(f"Coeficiente de atrito aplicado: {self.atrito}")
+        print(f"Ponto mais próximo encontrado: {ponto_mais_proximo}")
+        print(f"Distância mínima do ponto fornecido à malha: {dist_min:.4f} metros")
+        
+        return dist_min, ponto_mais_proximo
+
+# Definir os dados da pista
+gps_coords = [
+    (-22.738762, -47.533146), (-22.739971, -47.533735), (-22.740344, -47.533928),
+    (-22.740598, -47.533945), (-22.740725, -47.533782), (-22.740737, -47.533451),
+    (-22.739432, -47.532570), (-22.739353, -47.531387), (-22.739159, -47.531069),
+    (-22.738715, -47.530897), (-22.738259, -47.531082), (-22.737450, -47.531959),
+    (-22.737394, -47.532273), (-22.737490, -47.532471), (-22.737608, -47.532600),
+    (-22.738504, -47.533038), (-22.738762, -47.533146)  # Fechando o loop
+]
+
+elevacao = [10.4, 11.8, 11.7, 10.8, 9.8, 8.3, 7.5, 1.9, 0.4, 0.1, 1.4, 5.0, 6.6, 7.5, 8.0, 10.0, 10.4]
+
+# Criar uma instância da classe Pista e gerar o gráfico
+pista = Pista(gps_coords, elevacao, atrito=1.45, largura_pista=3)
+pista.plotar_pista()
+
+# Verificar o atrito em um ponto específico
+ponto_teste = (228.1386, -2.8528, 1)
+dist_min, ponto_mais_proximo = pista.verificar_atrito(ponto_teste)
+X_malha,Y_malha,Z_malha,_,_,_=pista.gerar_malha()
